@@ -1,7 +1,6 @@
 import tkinter as tk
 from itertools import cycle
-from tkinter import font
-from tkinter import simpledialog, messagebox
+from tkinter import font, simpledialog, messagebox
 from typing import NamedTuple
 import random
 
@@ -68,22 +67,19 @@ class TicTacToeGame:
         return no_winner and all(played_moves)
 
     def reset_game(self):
-        for row, row_content in enumerate(self._current_moves):
-            for col, _ in enumerate(row_content):
-                row_content[col] = Move(row, col)
+        self._setup_board()
         self._has_winner = False
         self.winner_combo = []
 
 class TicTacToeBoard(tk.Tk):
-    def __init__(self, game, vs_computer):
+    def __init__(self):
         super().__init__()
         self.title("Tic-Tac-Toe Game")
         self._cells = {}
-        self._game = game
-        self._vs_computer = vs_computer
-        self._create_menu()
-        self._create_board_display()
-        self._create_board_grid()
+        self.play_with_computer = False
+        self.difficulty = 1
+        self._create_menu()  # Create the menu initially
+        self.reset_board()
 
     def _create_menu(self):
         menu_bar = tk.Menu(master=self)
@@ -140,7 +136,7 @@ class TicTacToeBoard(tk.Tk):
                 self._update_display(msg, color)
             else:
                 self._game.toggle_player()
-                if self._vs_computer and self._game.current_player.label == "O":
+                if self.play_with_computer and self._game.current_player.label == "O":
                     self.computer_move()
                 else:
                     msg = f"{self._game.current_player.label}'s turn"
@@ -148,12 +144,20 @@ class TicTacToeBoard(tk.Tk):
 
     def computer_move(self):
         empty_moves = [
-            (move.row, move.col) 
-            for row in self._game._current_moves 
+            (move.row, move.col)
+            for row in self._game._current_moves
             for move in row if move.label == ""
         ]
+
         if empty_moves:
-            row, col = random.choice(empty_moves)
+            if self.difficulty == 10:  # Perfect play (e.g., a Minimax approach)
+                row, col = random.choice(empty_moves)
+            else:
+                if random.randint(1, 10) <= self.difficulty:
+                    row, col = random.choice(empty_moves)
+                else:
+                    row, col = empty_moves[0]  # Simple approach for "mistake"
+
             move = Move(row, col, self._game.current_player.label)
             self._update_button(self._get_button(row, col))
             self._game.process_move(move)
@@ -189,24 +193,38 @@ class TicTacToeBoard(tk.Tk):
                 button.config(highlightbackground="red")
 
     def reset_board(self):
-        self.destroy()
-        main()
+        for widget in self.winfo_children():
+            widget.destroy()
+
+        self._create_menu()  # Recreate the menu after destroying widgets
+
+        play_with_computer = messagebox.askyesno("Opponent", "Do you want to play against the computer?")
+        self.play_with_computer = play_with_computer
+
+        if play_with_computer:
+            difficulty = simpledialog.askinteger("Difficulty", "Enter difficulty (1-10):", minvalue=1, maxvalue=10)
+            if difficulty is not None:
+                self.difficulty = difficulty
+
+        new_size = get_board_size()
+        players = (Player(label="X", color="blue"), Player(label="O", color="green"))
+        self._game = TicTacToeGame(players=players, board_size=new_size)
+        self._cells.clear()
+        self._create_board_display()
+        self._create_board_grid()
+        self._update_display(msg="Ready?")
 
     def quit_game(self):
         self.destroy()
 
 def get_board_size():
-    while True:
-        size = simpledialog.askinteger("Board Size", "Enter board size (3-10):", minvalue=3, maxvalue=10)
-        if size is not None:
-            return size
+    size = simpledialog.askinteger("Board Size", "Enter board size (3-10):", minvalue=3, maxvalue=10)
+    if size is not None:
+        return size
+    return 3
 
 def main():
-    board_size = get_board_size()
-    vs_computer = messagebox.askyesno("Game Mode", "Play against the computer?")
-    players = (Player(label="X", color="blue"), Player(label="O", color="green"))
-    game = TicTacToeGame(players=players, board_size=board_size)
-    board = TicTacToeBoard(game, vs_computer)
+    board = TicTacToeBoard()
     board.mainloop()
 
 if __name__ == "__main__":
