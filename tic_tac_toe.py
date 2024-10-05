@@ -1,9 +1,10 @@
+"""tic tac toe game"""
+
 import tkinter as tk
 from itertools import cycle
 from tkinter import font, simpledialog, messagebox
 from typing import NamedTuple
 import random
-
 class Player(NamedTuple):
     label: str
     color: str
@@ -78,7 +79,7 @@ class TicTacToeBoard(tk.Tk):
         self._cells = {}
         self.play_with_computer = False
         self.difficulty = 1
-        self._create_menu()  # Create the menu initially
+        self._create_menu()
         self.reset_board()
 
     def _create_menu(self):
@@ -150,13 +151,13 @@ class TicTacToeBoard(tk.Tk):
         ]
 
         if empty_moves:
-            if self.difficulty == 10:  # Perfect play (e.g., a Minimax approach)
+            if self.difficulty == 10:
                 row, col = random.choice(empty_moves)
             else:
                 if random.randint(1, 10) <= self.difficulty:
                     row, col = random.choice(empty_moves)
                 else:
-                    row, col = empty_moves[0]  # Simple approach for "mistake"
+                    row, col = empty_moves[0]
 
             move = Move(row, col, self._game.current_player.label)
             self._update_button(self._get_button(row, col))
@@ -196,7 +197,7 @@ class TicTacToeBoard(tk.Tk):
         for widget in self.winfo_children():
             widget.destroy()
 
-        self._create_menu()  # Recreate the menu after destroying widgets
+        self._create_menu()
 
         play_with_computer = messagebox.askyesno("Opponent", "Do you want to play against the computer?")
         self.play_with_computer = play_with_computer
